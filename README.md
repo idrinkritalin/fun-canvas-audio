@@ -2,7 +2,7 @@
 
 TODO
 
-## Owners
+## Codeowners
 
 - Gennaro Bosone
 - Stefano Veltri
