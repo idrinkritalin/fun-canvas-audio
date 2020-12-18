@@ -1,8 +1,8 @@
 # CANVAS AUDIO FUN
 
-// TODO
+TODO
 
 ## Owners
 
-Gennaro Bosone
-Stefano Veltri
+- Gennaro Bosone
+- Stefano Veltri
