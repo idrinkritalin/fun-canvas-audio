@@ -1,0 +1,37 @@
+{
+  "name": "fun-canvas-audio",
+  "version": "1.0.0",
+  "description": "Some fun with canvas and Web Audio API",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve",
+    "build": "NODE_ENV=production webpack",
+    "build:dev": "webpack --watch",
+    "lint": "eslint src/**"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idrinkritalin/fun-canvas-audio.git"
+  },
+  "author": "idrinkritalin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/idrinkritalin/fun-canvas-audio/issues"
+  },
+  "homepage": "https://github.com/idrinkritalin/fun-canvas-audio#readme",
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "babel-loader": "^8.2.2",
+    "eslint": "^7.16.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "webpack": "^5.11.0",
+    "webpack-cli": "^4.2.0",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {}
+}
