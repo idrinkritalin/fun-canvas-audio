@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const width = document.body.clientWidth
 const height = document.body.clientHeight
 const pointSize = 1
@@ -5,8 +8,8 @@ let mouseX = 0
 let mouseY = 0
 let prevMouseX = 0
 let prevMouseY = 0
-let volume
-let oscillator
+let volume: any
+let oscillator: any
 let bPaint = false
 let bOscStared = false
 
@@ -40,14 +43,12 @@ canvas.addEventListener('mousemove', e => {
     mouseX = e.clientX
     mouseY = e.clientY
     paint()
-    // eslint-disable-next-line no-unused-vars
     prevMouseX = mouseX
-    // eslint-disable-next-line no-unused-vars
     prevMouseY = mouseY
   })
 })
-
 const initAudio = () => {
+  // @ts-ignore
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
   volume = audioCtx.createGain()
   volume.connect(audioCtx.destination)
