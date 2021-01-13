@@ -1,86 +1,90 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const width = document.body.clientWidth
-const height = document.body.clientHeight
-const pointSize = 1
-let mouseX = 0
-let mouseY = 0
-let prevMouseX = 0
-let prevMouseY = 0
-let volume: any
-let oscillator: any
-let bPaint = false
-let bOscStared = false
+import * as Urpflanze from 'urpflanze'
 
-const canvas = document.createElement('canvas')
-canvas.width = width
-canvas.height = height
-canvas.style.width = width + 'px'
-canvas.style.height = height + 'px'
-document.body.appendChild(canvas)
+const FFT_SIZE = 1024
+const audioContext = new AudioContext()
+let spectrum = null
+let peakVolume = 0
+let volume = 0
 
-const context = canvas.getContext('2d')
-context.fillStyle = '#000'
-context.fillRect(0, 0, canvas.width, canvas.height)
-
-canvas.addEventListener('mousedown', e => {
-  bPaint = true
-  if (!bOscStared) {
-    oscillator.start()
-    bOscStared = true
+const getRMS = (spectrum: any) => {
+  let rms = 0
+  for (let i = 0; i < spectrum.length; i++) {
+    rms += spectrum[i] * spectrum[i]
   }
-  volume.gain.value = 1
+  rms /= spectrum.length
+  rms = Math.sqrt(rms)
+
+  return rms
+}
+
+const processSound = (stream: any) => {
+  const analyser = audioContext.createAnalyser()
+  analyser.smoothingTimeConstant = 0.2
+  analyser.fftSize = FFT_SIZE
+  const node = audioContext.createScriptProcessor(FFT_SIZE * 2, 1, 1)
+
+  node.onaudioprocess = function () {
+    spectrum = new Uint8Array(analyser.frequencyBinCount)
+    analyser.getByteFrequencyData(spectrum)
+    const vol = getRMS(spectrum)
+    if (vol > peakVolume) peakVolume = vol
+    volume = vol
+  }
+
+  const input = audioContext.createMediaStreamSource(stream)
+  input.connect(analyser)
+  analyser.connect(node)
+  node.connect(audioContext.destination)
+}
+
+const getMic = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    processSound(stream)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+window.addEventListener('resize', () => {
+  const { innerWidth, innerHeight } = window
+  drawer.resize(innerWidth, innerHeight, innerWidth / innerHeight)
+  drawer.startAnimation()
 })
 
-canvas.addEventListener('mouseup', e => {
-  bPaint = false
-  volume.gain.value = 0
+const scene = new Urpflanze.Scene({
+  width: window.innerWidth,
+  height: window.innerHeight
 })
 
-canvas.addEventListener('mousemove', e => {
-  requestAnimationFrame(() => {
-    mouseX = e.clientX
-    mouseY = e.clientY
-    paint()
-    prevMouseX = mouseX
-    prevMouseY = mouseY
+const rect = new Urpflanze.Rect({
+  repetitions: [1, FFT_SIZE / 2],
+  sideLength: 1,
+  translate: ({ repetition }) => {
+    let x = 0
+    let y = 0
+
+    y = -spectrum[repetition.col.index - 1] * 2
+    x = -scene.width * 0.4 + repetition.col.offset * scene.width * 0.8
+
+    return [x, y]
+  },
+  style: {
+    fill: () => `rgba(255, 255, 255, ${volume * 0.05}`
+  }
+})
+
+scene.add(
+  new Urpflanze.Shape({
+    shape: rect,
+    repetitions: 20,
+    distance: 160,
+    scale: 0.2,
+    rotateZ: Math.PI
   })
-})
-const initAudio = () => {
-  // @ts-ignore
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-  volume = audioCtx.createGain()
-  volume.connect(audioCtx.destination)
+)
 
-  oscillator = audioCtx.createOscillator()
-  oscillator.type = 'sine'
-  oscillator.connect(volume)
-}
+const drawer = new Urpflanze.DrawerCanvas(scene, document.body)
 
-const paint = () => {
-  if (bPaint) {
-    volume.gain.value = mouseY / canvas.height
-    oscillator.frequency.value = (mouseX / canvas.width) * 880
-    const hue = (mouseX / canvas.width) * 360
-    const lum = (mouseY / canvas.height) * 100
-    const time = Date.now()
-    context.fillStyle = `hsl(${hue}, 100%, ${lum}%)`
-
-    const finalSize = pointSize + (0.5 * Math.sin(time / 300) + 0.5) * 20
-    context.shadowBlur = 100
-    context.shadowColor = `hsl(${(time / 10) % 360}, 100%, 50%)`
-
-    /* // TODO: disegnare frame tra cord mouse precedenti a correnti
-    const angle = Math.atan2(mouseY - prevMouseY, mouseX - prevMouseX)
-    const x = Math.cos(angle)
-    const y = Math.sin(angle)
-    for (let i = 0, len = Math.abs(Math.hypot(mouseX, mouseY) - Math.hypot(prevMouseX, prevMouseY)); i < len; i ++) {
-      context.fillRect(prevMouseX + i * x, prevMouseY + i * y, pointSize, pointSize)
-    } */
-
-    context.fillRect(mouseX - finalSize, mouseY - finalSize, finalSize, finalSize)
-  }
-}
-
-initAudio()
+getMic()
+drawer.startAnimation()
